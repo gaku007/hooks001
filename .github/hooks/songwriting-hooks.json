@@ -1,0 +1,88 @@
+{
+  "hooks": [
+    {
+      "id": "lyrics-file-creation",
+      "name": "Lyrics File Template Generator",
+      "description": "Automatically generates a template structure when a new .lyrics file is created",
+      "event": "FileCreated",
+      "pattern": "**/*.lyrics",
+      "commands": [
+        {
+          "id": "inject-lyrics-template",
+          "type": "inline",
+          "description": "Inject default .lyrics template",
+          "condition": "file.size == 0",
+          "action": "inject-content",
+          "content": "SONG: [Your Song Title]\nARTIST: [Your Name]\nKEY: C Major\nTEMPO: 120 BPM\nGENRE: [Pop/Rock/Jazz/Hip-Hop/etc.]\nMOOD: [Inspirational/Happy/Sad/Angry/etc.]\nTHEME: [Describe the main theme or story]\n\n[VERSE 1]\n[Write your first verse here]\n[Keep lines short and punchy]\n[Aim for 4-8 lines]\n\n[PRE-CHORUS]\n[Optional: Build anticipation before chorus]\n[2-4 lines typically]\n\n[CHORUS]\n[Your main hook goes here]\n[Make it memorable and singable]\n[4-8 lines]\n\n[VERSE 2]\n[Continue your story]\n[Maintain similar syllable counts]\n[4-8 lines]\n\n[BRIDGE]\n[Introduce contrast or new perspective]\n[Usually 4-8 lines]\n\n[CHORUS]\n[Repeat your chorus]\n\n[OUTRO]\n[Closing section or ad-libs]\n"
+        }
+      ]
+    },
+    {
+      "id": "lyrics-format-validation",
+      "name": "Lyrics Format Validator",
+      "description": "Validates .lyrics file format and suggests corrections",
+      "event": "FileSave",
+      "pattern": "**/*.lyrics",
+      "commands": [
+        {
+          "id": "validate-lyrics-sections",
+          "type": "shell",
+          "description": "Check for proper section formatting",
+          "command": "grep -E '^\\[([A-Z0-9\\s-]+)\\]$' \"$FILE_PATH\" | wc -l",
+          "validation": {
+            "minSections": 1,
+            "message": "Ensure sections use format: [SECTION NAME]"
+          }
+        }
+      ]
+    },
+    {
+      "id": "songwriting-metadata-reminder",
+      "name": "Songwriting Metadata Checker",
+      "description": "Reminds user to include song metadata (title, artist, genre, etc.)",
+      "event": "PreToolUse",
+      "pattern": "**/*.lyrics",
+      "condition": "file content missing SONG:|GENRE:|MOOD:",
+      "commands": [
+        {
+          "id": "suggest-metadata",
+          "type": "notification",
+          "description": "Suggest adding metadata to .lyrics file",
+          "message": "💡 Tip: Add metadata at the top of your .lyrics file:\nSONG: [Title]\nARTIST: [Name]\nGENRE: [Genre]\nMOOD: [Mood]\n\nThis helps the Songwriting Agent provide better suggestions."
+        }
+      ]
+    },
+    {
+      "id": "rhyme-scheme-analyzer",
+      "name": "Rhyme Scheme Analyzer",
+      "description": "Auto-analyzes and displays rhyme scheme on save",
+      "event": "FileSave",
+      "pattern": "**/*.lyrics",
+      "commands": [
+        {
+          "id": "analyze-rhyme-scheme",
+          "type": "shell",
+          "description": "Analyze last verse's rhyme scheme",
+          "command": "tail -n 10 \"$FILE_PATH\" | grep -v '^\\[' | grep -v '^$' | tail -n 8",
+          "output": "display-in-status"
+        }
+      ]
+    },
+    {
+      "id": "songwriting-context-injection",
+      "name": "Context Injection for Songwriting Agent",
+      "description": "Injects song context when opening .lyrics files",
+      "event": "FileOpen",
+      "pattern": "**/*.lyrics",
+      "commands": [
+        {
+          "id": "extract-song-metadata",
+          "type": "shell",
+          "description": "Extract and inject song metadata into context",
+          "command": "head -n 10 \"$FILE_PATH\" | grep -E 'SONG:|GENRE:|MOOD:|KEY:' | cut -d: -f2- | xargs",
+          "injectIntoContext": true
+        }
+      ]
+    }
+  ]
+}
